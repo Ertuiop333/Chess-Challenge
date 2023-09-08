@@ -11,9 +11,10 @@ namespace ChessChallenge.Application
         public const int IncrementMilliseconds = 0 * 1000;
         public const float MinMoveDelay = 0;
         public static readonly bool RunBotsOnSeparateThread = true;
+		public const int startNextGameDelayMs = 1;
 
-        // Display settings
-        public const bool DisplayBoardCoordinates = true;
+		// Display settings
+		public const bool DisplayBoardCoordinates = true;
         public static readonly Vector2 ScreenSizeSmall = new(1280, 720);
         public static readonly Vector2 ScreenSizeBig = new(1920, 1080);
 

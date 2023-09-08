@@ -1,4 +1,5 @@
-﻿using ChessChallenge.API;
+﻿using Chess_Challenge.src.ChatGpt;
+using ChessChallenge.API;
 using System;
 
 namespace ChessChallenge.Example
@@ -10,7 +11,13 @@ namespace ChessChallenge.Example
         // Piece values: null, pawn, knight, bishop, rook, queen, king
         int[] pieceValues = { 0, 100, 300, 300, 500, 900, 10000 };
 
-        public Move Think(Board board, Timer timer)
+		public NeuralNetwork Brain { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+		public void InitializeAI() {
+
+		}
+
+		public Move Think(Board board, Timer timer)
         {
             Move[] allMoves = board.GetLegalMoves();
 

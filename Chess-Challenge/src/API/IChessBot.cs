@@ -1,8 +1,12 @@
 ﻿
+using Chess_Challenge.src.ChatGpt;
+
 namespace ChessChallenge.API
 {
     public interface IChessBot
     {
-        Move Think(Board board, Timer timer);
+		public NeuralNetwork Brain { get; set; }
+
+		Move Think(Board board, Timer timer);
     }
 }

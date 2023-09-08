@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using static ChessChallenge.Application.Settings;
 using static ChessChallenge.Application.ConsoleHelper;
+using System.Dynamic;
 
 namespace ChessChallenge.Application
 {
@@ -29,6 +30,11 @@ namespace ChessChallenge.Application
         Board board;
         public ChessPlayer PlayerWhite { get; private set; }
         public ChessPlayer PlayerBlack {get;private set;}
+
+        public int numberOfMovesPlayed_White;
+        public int numberOfMovesPlayed_Black;
+
+        public int maxNumberOfGames = 10;
 
         float lastMoveMadeTime;
         bool isWaitingToPlayMove;
@@ -55,6 +61,9 @@ namespace ChessChallenge.Application
         readonly int tokenCount;
         readonly int debugTokenCount;
         readonly StringBuilder pgns;
+
+        // AI stuff
+        private AIGenerationManager AIManager = new AIGenerationManager();
 
         public ChallengeController()
         {
@@ -95,13 +104,22 @@ namespace ChessChallenge.Application
             board = new Board();
             bool isGameWithHuman = whiteType is PlayerType.Human || blackType is PlayerType.Human;
             int fenIndex = isGameWithHuman ? 0 : botMatchGameIndex / 2;
-            board.LoadPosition(botMatchStartFens[fenIndex]);
+            // not going to use the fens for now
+            // board.LoadPosition(botMatchStartFens[fenIndex]);
+
+            // instead, we'll use the starting position
+            board.LoadPosition(FenUtility.StartPositionFEN);
 
             // Player Setup
-            PlayerWhite = CreatePlayer(whiteType);
-            PlayerBlack = CreatePlayer(blackType);
-            PlayerWhite.SubscribeToMoveChosenEventIfHuman(OnMoveChosen);
-            PlayerBlack.SubscribeToMoveChosenEventIfHuman(OnMoveChosen);
+            if (whiteType == PlayerType.MyBot && blackType == PlayerType.MyBot) {
+                PlayerWhite = AIManager.GetNextBot();
+                PlayerBlack = AIManager.GetNextBot();
+            } else {
+				PlayerWhite = CreatePlayer(whiteType);
+				PlayerBlack = CreatePlayer(blackType);
+				PlayerWhite.SubscribeToMoveChosenEventIfHuman(OnMoveChosen);
+				PlayerBlack.SubscribeToMoveChosenEventIfHuman(OnMoveChosen);
+			}
 
             // UI Setup
             boardUI.UpdatePosition(board);
@@ -163,6 +181,9 @@ namespace ChessChallenge.Application
 
         void NotifyTurnToMove()
         {
+            if (board.IsWhiteToMove) numberOfMovesPlayed_White++;
+			else numberOfMovesPlayed_Black++;
+
             //playerToMove.NotifyTurnToMove(board);
             if (PlayerToMove.IsHuman)
             {
@@ -290,14 +311,16 @@ namespace ChessChallenge.Application
                 // If 2 bots playing each other, start next game automatically.
                 if (PlayerWhite.IsBot && PlayerBlack.IsBot)
                 {
+                    // store ai stats
+                    AIManager.GameEnded(PlayerWhite, PlayerBlack, result, botAPlaysWhite, numberOfMovesPlayed_Black, numberOfMovesPlayed_White);
+
                     UpdateBotMatchStats(result);
                     botMatchGameIndex++;
                     int numGamesToPlay = botMatchStartFens.Length * 2;
 
-                    if (botMatchGameIndex < numGamesToPlay && autoStartNextBotMatch)
+                    if (botMatchGameIndex < numGamesToPlay && autoStartNextBotMatch && botMatchGameIndex < maxNumberOfGames )
                     {
                         botAPlaysWhite = !botAPlaysWhite;
-                        const int startNextGameDelayMs = 600;
                         System.Timers.Timer autoNextTimer = new(startNextGameDelayMs);
                         int originalGameID = gameID;
                         autoNextTimer.Elapsed += (s, e) => AutoStartNextBotMatchGame(originalGameID, autoNextTimer);
@@ -307,7 +330,10 @@ namespace ChessChallenge.Application
                     }
                     else if (autoStartNextBotMatch)
                     {
-                        Log("Match finished", false, ConsoleColor.Blue);
+						AIManager.SeriesEnded(maxNumberOfGames);
+                        numberOfMovesPlayed_White = 0;
+                        numberOfMovesPlayed_Black = 0;
+						Log("Match finished", false, ConsoleColor.Blue);
                     }
                 }
             }
