@@ -229,7 +229,7 @@ namespace ChessChallenge.Application
         {
             return type switch
             {
-                PlayerType.MyBot => new ChessPlayer(new MyBot(), type, GameDurationMilliseconds),
+                PlayerType.MyBot => new ChessPlayer(AIManager.GetSavedBot(), type, GameDurationMilliseconds),
                 PlayerType.EvilBot => new ChessPlayer(new EvilBot(), type, GameDurationMilliseconds),
                 _ => new ChessPlayer(new HumanPlayer(boardUI), type)
             };
@@ -445,8 +445,8 @@ namespace ChessChallenge.Application
         ChessPlayer PlayerToMove => board.IsWhiteToMove ? PlayerWhite : PlayerBlack;
         ChessPlayer PlayerNotOnMove => board.IsWhiteToMove ? PlayerBlack : PlayerWhite;
 
-        public int TotalGameCount => botMatchStartFens.Length * 2;
-        public int CurrGameNumber => Math.Min(TotalGameCount, botMatchGameIndex + 1);
+        public int TotalGameCount => maxNumberOfGames;
+        public int CurrGameNumber => Math.Min(maxNumberOfGames, botMatchGameIndex + 1);
         public string AllPGNs => pgns.ToString();
 
 

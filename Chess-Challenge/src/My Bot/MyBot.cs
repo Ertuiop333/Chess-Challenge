@@ -3,6 +3,8 @@ using Chess_Challenge.src.MyAI;
 using ChessChallenge.Application;
 using System;
 using System.Numerics;
+using System.Collections.Generic;
+using System.Linq;
 
 public class MyBot : IChessBot {
 	public ChessAI inpputDeserializer;
@@ -20,12 +22,13 @@ public class MyBot : IChessBot {
 	}
 
 
-	public Move Think(Board board, Timer timer) {
-
+	public Move Think(Board board, Timer timer, ChallengeController challengeController) {
 		inpputDeserializer.SetNewInputs(board);
 
 		double theAiNumber = _brain.GetNeuralNetworkOutput(inpputDeserializer.newInput);
 		Move[] move = board.GetLegalMoves();
+
+		// if (challengeController.PlayerWhite.IsBot )
 
 		int moveIndex = (int)Math.Round(theAiNumber * move.Length - 1);
 
@@ -41,5 +44,9 @@ public class MyBot : IChessBot {
 		}
 
 		return move[moveIndex];
+	}
+
+	public void ReverseValidMoves() {
+
 	}
 }

@@ -1,0 +1,5 @@
+Chess bot todo list:
+
+- make the index of the white bot reversed (GetLegalmoves) because the bot is used to start on the back line
+- make the alter func less dramatic because it has too much change factor
+- make a variable to play against a saved bot (text file)

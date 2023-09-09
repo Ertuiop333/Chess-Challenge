@@ -2,6 +2,7 @@
 using ChessChallenge.API;
 using ChessChallenge.Application;
 using ChessChallenge.Chess;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,6 +18,7 @@ public class AIGenerationManager {
 	private NeuralNetwork currentBestAI;
 	private int lowerMoveCount = 1000;
 	private int currentWinerMoveCount = 0;
+	public List<NeuralNetwork> lastNaturalSelection = new();
 
 	public void StoreAI(NeuralNetwork neuralNetwork) {
 		// Store the AI in a file
@@ -43,7 +45,7 @@ public class AIGenerationManager {
 	private void SaveBestAIToText() {
 		string directoryPath = Path.Combine(FileHelper.AppDataPath, "AI");
 		Directory.CreateDirectory(directoryPath);
-		string fileName = FileHelper.GetUniqueFileName(directoryPath, "ai", ".txt");
+		string fileName = FileHelper.GetUniqueFileName(directoryPath, "best AI from batch # ", ".txt");
 		string fullPath = Path.Combine(directoryPath, fileName);
 
 		// serialize only the bot that has the least moves
@@ -57,18 +59,24 @@ public class AIGenerationManager {
 	public void SeriesEnded(int gamesPlayed) {
 		SaveBestAIToText();
 
+		if (naturalSelection.Count == 0) {
+			if (lastNaturalSelection.Count > 0) {
+				naturalSelection = lastNaturalSelection;
+			}
+			else
+				return;
+		}
 		// #gamesPlayed bots to create
 		int childCount = (gamesPlayed * 2) / naturalSelection.Count;
 		for (int i = 0; i < naturalSelection.Count; i++) {
 			childs.AddRange(naturalSelection[i].GiveBirth(childCount).ToList());
 		}
 
+		lastNaturalSelection.AddRange(naturalSelection);
 		naturalSelection.Clear();
 	}
 
 	public void GameEnded(ChessPlayer botWhite, ChessPlayer botBlack, GameResult result, bool botAPlayingWhite, int blackNumberOfMoves, int whiteNumberOfMoves) {
-
-
 		// store ai if won
 		if (result == GameResult.BlackIsMated) {
 			currentWinerMoveCount = whiteNumberOfMoves;
@@ -86,12 +94,32 @@ public class AIGenerationManager {
 		return player;
 	}
 
+	public MyBot GetSavedBot() {
+		// this is for debug purposes, remove after test completed
+		// this is where you input the file path of the bot
+		string filePath = "C:/Users/Ertui/AppData/Local/ChessCodingChallenge/AI/.txt";
+
+		if (File.Exists(filePath)) {
+			// Read the JSON content from the file
+			string jsonContent = File.ReadAllText(filePath);
+
+			NeuralNetwork? nn = JsonSerializer.Deserialize(jsonContent, typeof(NeuralNetwork)) as NeuralNetwork;
+
+			if (nn != null) {
+				return new MyBot(nn);
+			}
+		}
+
+		return new MyBot();
+	}
+
 	public static string SerializeNeuralNetwork(NeuralNetwork network) {
 		JsonSerializerOptions options = new JsonSerializerOptions {
 			WriteIndented = true, // To make the JSON more readable
 		};
 
 		// Serialize the neural network to JSON
+		Console.WriteLine(network);
 		string serializedNetwork = JsonSerializer.Serialize(network, options);
 
 		return serializedNetwork;
